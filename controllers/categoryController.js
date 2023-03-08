@@ -4,6 +4,7 @@ const { body, validationResult } = require("express-validator");
 
 
 const async = require("async");
+const category = require("../models/category");
 
 exports.index = (req, res) => {
   async.parallel(
@@ -124,12 +125,70 @@ exports.category_create_post = [
 
 
 exports.category_delete_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Category delete GET");
+  async.parallel({
+    items(callback){
+      Item.find({category: req.params.id}).exec(callback);
+    },
+    category(callback){
+      Category.findById({_id: req.params.id}).exec(callback);
+    }
+  },
+  (err, results) => {
+    if (err) {
+      return next(err);
+    }
+    if (results.category == null) {
+      res.redirect("/catalog/category");
+    }
+    //Success
+    res.render("category_delete", {
+      title: "Delete Category",
+      category: results.category,
+      category_items: results.items
+    });
+  })
 };
 
 exports.category_delete_post = (req, res) => {
   res.send("NOT IMPLEMENTED: Category delete POST");
 };
+
+// Handle Author delete on POST.
+exports.category_delete_post = (req, res, next) => {
+  async.parallel({
+    items(callback){
+      Item.find({category: req.params.id}).exec(callback);
+    },
+    category(callback){
+      Category.findById({_id: req.params.id}).exec(callback);
+    }
+  },
+    (err, results) => {
+      if (err) {
+        return next(err);
+      }
+      // Success
+      if (results.items.length > 0) {
+        // Author has books. Render in same way as for GET route.
+        res.render("category_delete", {
+          title: "Delete Category",
+          category: results.category,
+          category_items: results.items
+        });
+        return;
+      }
+      // Delete object.
+      Category.findByIdAndRemove(req.body.categoryid, (err) => {
+        if (err) {
+          return next(err);
+        }
+        // Success
+        res.redirect("/catalog/category");
+      });
+    }
+  );
+};
+
 
 exports.category_update_get = (req, res) => {
   res.send("NOT IMPLEMENTED: Category update GET");
