@@ -1,5 +1,7 @@
 const Category = require("../models/category");
 const Item = require("../models/item");
+const { body, validationResult } = require("express-validator");
+
 
 const async = require("async");
 
@@ -65,12 +67,61 @@ exports.category_detail = (req, res) => {
 };
 
 exports.category_create_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Category create GET");
+  res.render("category_form", { title: "Create a Category" });
 };
 
-exports.category_create_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: Category create POST");
-};
+exports.category_create_post = [
+  // Validate and sanitize the name field.
+  body("name", "Category name required")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+  body("description", "Description required")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+
+
+  // Process request after validation and sanitization.
+  (req, res, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(req);
+
+    // Create a category object with escaped and trimmed data.
+    const category = new Category({ name: req.body.name, description: req.body.description });
+
+    if (!errors.isEmpty()) {
+      // There are errors. Render the form again with sanitized values/error messages.
+      res.render("category_form", {
+        title: "Create a Category",
+        category,
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      // Data from form is valid.
+      // Check if Genre with same name already exists.
+      Category.findOne({ name: req.body.name }).exec((err, found_category) => {
+        if (err) {
+          return next(err);
+        }
+
+        if (found_category) {
+          res.redirect(found_category.url);
+        } else {
+          category.save((err) => {
+            if (err) {
+              return next(err);
+            }
+            // Genre saved. Redirect to genre detail page.
+            res.redirect(category.url);
+          });
+        }
+      });
+    }
+  },
+];
+
 
 exports.category_delete_get = (req, res) => {
   res.send("NOT IMPLEMENTED: Category delete GET");
