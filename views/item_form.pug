@@ -1,0 +1,39 @@
+extends layout
+
+block content
+  h1 #{title}
+
+  form(method='POST' action='')
+    div.form-group
+
+      label(for='name') Item:
+      input#name.form-control(type='text', placeholder='Cadburi, Choco bar, etc.' name='name' value=(undefined===item ? '' : item.name))
+      br
+
+      label(for='description') Description:
+      input#name.form-control(type='text', placeholder='Find all great sugar treats here!' name='description' value=(undefined===item ? '' : item.description))
+      br
+
+      label(for='price') Price:
+      input#name.form-control(type='text', placeholder='10' name='price' value=(undefined===item ? '' : item.price))
+      br
+
+      label(for='stock') Stock:
+      input#name.form-control(type='text', placeholder='300' name='stock' value=(undefined===item ? '' : item.stock))
+
+    div.form-group
+      label(for='category') Category:
+      select#category.form-control(type='select', placeholder='Select category' name='category' required='true' )
+        - categories.sort(function(a, b) {let textA = a.name; let textB = b.name; return (textA < textB) ? -1 : (textA > textB) ? 1 : 0;});
+        for category in categories
+          if category
+            option(value=category._id selected=(category._id.toString()==current_category.toString() ? 'selected' : false) ) #{category.name}
+          else
+            option(value=category._id) #{category.name}
+
+    button.btn.btn-primary(type='submit') Submit
+
+  if errors
+   ul
+    for error in errors
+     li!= error.msg
