@@ -38,7 +38,7 @@ exports.category_list = function (req, res, next) {
     });
 };
 
-exports.category_detail = (req, res) => {
+exports.category_detail = (req, res, next) => {
   async.parallel(
     {
       category(callback) {
@@ -149,11 +149,6 @@ exports.category_delete_get = (req, res) => {
   })
 };
 
-exports.category_delete_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: Category delete POST");
-};
-
-// Handle Author delete on POST.
 exports.category_delete_post = (req, res, next) => {
   async.parallel({
     items(callback){

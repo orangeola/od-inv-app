@@ -14,7 +14,7 @@ exports.item_list = function (req, res, next) {
     });
 };
 
-exports.item_detail = (req, res) => {
+exports.item_detail = (req, res, next) => {
   Item.findById(req.params.id)
     .populate("category")
     .exec(function (err, item_detail) {
@@ -126,11 +126,39 @@ exports.item_create_post = [
 
 
 exports.item_delete_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Item delete GET");
+    Item.findById({_id: req.params.id})
+    .exec(function (err, item) {
+      if (err) {
+        return next(err);
+      }
+      if (item == null) {
+        res.redirect("/catalog/item");
+      }
+      //Successful, so render
+      res.render("item_delete", { 
+        title: "Delete an Item", 
+        item: item });
+    });
 };
 
 exports.item_delete_post = (req, res) => {
-  res.send("NOT IMPLEMENTED: Item delete POST");
+  Item.findById({_id: req.params.id})
+    .exec(function (err, item) {
+      if (err) {
+        return next(err);
+      }
+      if (item == null) {
+        res.redirect("/catalog/item");
+      }
+      // Delete object.
+      Item.findByIdAndRemove(req.body.itemid, (err) => {
+        if (err) {
+          return next(err);
+        }
+        // Success
+        res.redirect("/catalog/item");
+      });
+    });
 };
 
 exports.item_update_get = (req, res) => {
