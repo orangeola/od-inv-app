@@ -191,9 +191,73 @@ exports.category_delete_post = (req, res, next) => {
 
 
 exports.category_update_get = (req, res) => {
-  res.send("NOT IMPLEMENTED: Category update GET");
+  Category.findById({_id: req.params.id})
+  .exec(function (err, category) {
+      if (err) {
+        return next(err);
+      }
+      //Successful, so render
+      res.render("category_form", { title: "Category List", category: category });
+    });
 };
 
 exports.category_update_post = (req, res) => {
   res.send("NOT IMPLEMENTED: Category update POST");
 };
+
+exports.category_update_post = [
+  // Validate and sanitize the name field.
+  body("name", "Category name required")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+  body("description", "Description required")
+  .trim()
+  .isLength({ min: 1 })
+  .escape(),
+
+
+  // Process request after validation and sanitization.
+  (req, res, next) => {
+    // Extract the validation errors from a request.
+    const errors = validationResult(req);
+
+    // Create a category object with escaped and trimmed data.
+    const category = new Category({ 
+      name: req.body.name, 
+      description: req.body.description, 
+      _id: req.params.id
+    });
+
+    if (!errors.isEmpty()) {
+      // There are errors. Render the form again with sanitized values/error messages.
+      res.render("category_form", {
+        title: "Create a Category",
+        category,
+        errors: errors.array(),
+      });
+      return;
+    } else {
+      // Data from form is valid.
+      // Check if Genre with same name already exists.
+      Category.findOne({ name: req.body.name }).exec((err, found_category) => {
+        if (err) {
+          return next(err);
+        }
+
+        if (found_category) {
+          res.redirect(found_category.url);
+        } else {
+          // Data from form is valid. Update the record.
+          Category.findByIdAndUpdate(req.params.id, category, {}, (err, thecategory) => {
+          if (err) {
+            return next(err);
+          }
+
+          // Successful: redirect to book detail page.
+          res.redirect(thecategory.url);});
+        }
+      });
+    }
+  },
+];
