@@ -25,7 +25,7 @@ exports.index = (req, res) => {
 
 exports.category_list = function (req, res, next) {
   Category.find()
-    .sort({ title: 1 })
+    .sort({ name: 1 })
     .exec(function (err, list_category) {
       if (err) {
         return next(err);
@@ -36,7 +36,32 @@ exports.category_list = function (req, res, next) {
 };
 
 exports.category_detail = (req, res) => {
-  res.send(`NOT IMPLEMENTED: Category detail: ${req.params.id}`);
+  async.parallel(
+    {
+      category(callback) {
+        Category.findById(req.params.id).exec(callback);
+      },
+      
+      category_items(callback) {
+        Item.find({ category: req.params.id }).exec(callback);
+      }
+    },
+    (err, results) => {
+      if (err) {
+        return next(err);
+      }
+      if (results.category == null) {
+        const err = new Error("Category not found");
+        err.status = 404;
+        return next(err);
+      }
+      //Success
+      res.render("category_detail", {
+        category_detail: results.category,
+        category_items: results.category_items
+      });
+    }
+  )
 };
 
 exports.category_create_get = (req, res) => {
